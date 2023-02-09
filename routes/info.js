@@ -2,6 +2,12 @@ const router = require("express").Router();
 const inquirer = require("inquirer");
 require("console.table");
 
+/* const init = () => {
+  if (err) throw err;
+
+  clientInteraction();
+} */
+
 //Function to prompt the user
 const clientInteraction = () => {
   inquirer
@@ -165,7 +171,7 @@ function addRole() {
   router.post('/api/roles', ({ body }, res) => {
     const sql = `INSERT INTO roles (department_id, job_title, salary)
       VALUES (?)`;
-    const params = [body.department_id, body.job_title, bodu.salary];
+    const params = [body.department_id, body.job_title, body.salary];
     
     db.query(sql, params, (err, result) => {
       if (err) {
@@ -229,4 +235,27 @@ function insertRole(roleChoices) {
           clientInteraction();
         });
     });
+}
+
+function addEmployee() {
+  router.post('/api/employees', ({ body }, res) => {
+    const sql = `INSERT INTO roles (role_id, first_name, last_name, manager_id)
+      VALUES (?)`;
+    const params = [body.department_id, body.job_title, body.salary];
+    
+    db.query(sql, params, (err, result) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+
+      const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
+        value: id, department_id: `${department_id}`, job_title: `${job_title}`, salary: `${salary}`
+      }));
+
+      console.table(res);
+
+      insertRole(roleChoices);
+    });
+  });
 }
