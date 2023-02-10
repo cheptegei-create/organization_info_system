@@ -3,6 +3,13 @@ const routes = require('./routes/info');
 const inquirer = require("inquirer");
 require("console.table");
 
+const PORT = process.env.PORT || 3001;
+const app = express();
+
+// Express middleware
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -262,13 +269,13 @@ function addEmployee() {
         return;
       }
 
-      const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
-        value: id, department_id: `${department_id}`, job_title: `${job_title}`, salary: `${salary}`
+      const employeeChoices = res.map(({ id, role_id, first_name, last_name, manager_id }) => ({
+        value: id, role_id: `${role_id}`, first_name: `${first_name}`, last_name: `${last_name}`, manager_id: `${manager_id}`
       }));
 
       console.table(res);
 
-      insertRole(roleChoices);
+      insertEmployee(employeeChoices);
     });
   });
 }
