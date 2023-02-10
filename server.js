@@ -34,6 +34,7 @@ const clientInteraction = () => {
         "add a department",
         "add a role",
         "add an employee",
+        "remove an employee",
         "update an employee role",
         "End",
       ],
@@ -53,7 +54,9 @@ const clientInteraction = () => {
         addEmployee();
       } else if (options === "update an employee role") {
         updateRole();
-      } else if (options === "End") {
+      } else if (options === "remove an employee") {
+        removeEmployee();
+      }else if (options === "End") {
         connection.end();
       }
     });
@@ -134,7 +137,7 @@ function addDepartment() {
   });
 }
 
-function insertDepartment(departmentChoices) {
+function insertDepartment() {
   inquirer
     .prompt([
       {
@@ -143,10 +146,9 @@ function insertDepartment(departmentChoices) {
         message: "What is the name of the department?",
       },
       {
-        type: "list",
+        type: "input",
         name: "id",
         message: "What is the department's number id?",
-        choices: departmentChoices,
       },
     ])
     .then(function (data) {
@@ -178,8 +180,7 @@ function addRole() {
 
   connection.query(sql, params, (err, res) => {
     if (err) {
-      res.status(400).json({ error: err.message });
-      return;
+      throw err;
     }
 
     const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
@@ -195,7 +196,7 @@ function addRole() {
   });
 }
 
-function insertRole(roleChoices) {
+function insertRole() {
   inquirer
     .prompt([
       {
@@ -222,7 +223,7 @@ function insertRole(roleChoices) {
     .then(function (data) {
       console.log(data);
 
-      var sql = `INSERT INTO roles SET ?`;
+      const sql = `INSERT INTO roles SET ?`;
       // when finished prompting, insert a new item into the db with that info
       connection.query(
         sql,
@@ -253,18 +254,65 @@ function addEmployee() {
       throw err;
     }
 
-    const employeeChoices = res.map(
-      ({ id, role_id, first_name, last_name, manager_id }) => ({
-        value: id,
-        role_id: `${role_id}`,
-        first_name: `${first_name}`,
-        last_name: `${last_name}`,
-        manager_id: `${manager_id}`,
-      })
-    );
+    const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
+      value: id,
+      department_id: `${department_id}`,
+      job_title: `${job_title}`,
+      salary: `${salary}`,
+    }));
 
     console.table(res);
 
-    insertEmployee(employeeChoices);
+    insertEmployee(roleChoices);
   });
 }
+
+function insertEmployee(roleChoices) {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        name: "id",
+        message: "What is the employee number id?",
+      },
+      {
+        type: "list",
+        name: "role_id",
+        message: "Allocate a role to the employee?",
+        choices: roleChoices
+      },
+      {
+        type: "input",
+        name: "first_name",
+        message: "What is the employee's first name?",
+      },
+      {
+        type: "input",
+        name: "last_name",
+        message: "What is the employee's last name?",
+      },
+    ])
+    .then(function (data) {
+      console.log(data);
+
+      var sql = `INSERT INTO roles SET ?`;
+      // when finished prompting, insert a new item into the db with that info
+      connection.query(
+        sql,
+        {
+         first_name: data.first_name,
+          last_name: data.last_name,
+          id: data.id,
+          role_id: data.role_id,
+        },
+        function (err, res) {
+          if (err) throw err;
+
+          console.table(res);
+
+          clientInteraction();
+        }
+      );
+    });
+}
+
