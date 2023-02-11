@@ -39,24 +39,25 @@ const clientInteraction = () => {
         "End",
       ],
     })
-    .then(function ({ options }) {
-      if (options === "view all departments") {
+    .then((options) => {
+      if ("view all departments") {
+        console.log("executing view all department choice");
         viewDepartments();
-      } else if (options === "view all roles") {
+      } else if ("view all roles") {
         viewRoles();
-      } else if (options === "view all employees") {
+      } else if ("view all employees") {
         viewEmployees();
-      } else if (options === "add a department") {
+      } else if ("add a department") {
         addDepartment();
-      } else if (options === "add a role") {
+      } else if ("add a role") {
         addRole();
-      } else if (options === "add an employee") {
+      } else if ("add an employee") {
         addEmployee();
-      } else if (options === "update an employee role") {
+      } else if ("update an employee role") {
         updateRole();
-      } else if (options === "remove an employee") {
+      } else if ("remove an employee") {
         removeEmployee();
-      }else if (options === "End") {
+      }else if ("End") {
         connection.end();
       }
     });
@@ -117,7 +118,7 @@ function viewEmployees() {
 }
 
 function addDepartment() {
-  const sql = `INSERT INTO movies (department_name)
+  const sql = `INSERT INTO departments (department_name)
       VALUES (?)`;
   const params = [body.department_name];
 
@@ -126,14 +127,9 @@ function addDepartment() {
       throw err;
     }
 
-    const departmentChoices = res.map(({ id, department_name }) => ({
-      value: id,
-      department_name: `${department_name}`,
-    }));
-
     console.table(res);
 
-    insertDepartment(departmentChoices);
+    insertDepartment();
   });
 }
 
@@ -176,27 +172,25 @@ function insertDepartment() {
 function addRole() {
   const sql = `INSERT INTO roles (department_id, job_title, salary)
       VALUES (?)`;
-  const params = [body.department_id, body.job_title, body.salary];
+  const params = [body.department_id, body.department_name];
 
   connection.query(sql, params, (err, res) => {
     if (err) {
       throw err;
     }
 
-    const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
+    const departmentChoices = res.map(({ id, department_name }) => ({
       value: id,
-      department_id: `${department_id}`,
-      job_title: `${job_title}`,
-      salary: `${salary}`,
+      department_name: `${department_name}`,
     }));
 
     console.table(res);
 
-    insertRole(roleChoices);
+    insertRole(departmentChoices);
   });
 }
 
-function insertRole() {
+function insertRole(departmentChoices) {
   inquirer
     .prompt([
       {
@@ -205,9 +199,10 @@ function insertRole() {
         message: "What is the role number id?",
       },
       {
-        type: "input",
+        type: "list",
         name: "department_id",
         message: "In which department_id does it belong to?",
+        choices: departmentChoices
       },
       {
         type: "input",
@@ -245,7 +240,7 @@ function insertRole() {
 }
 
 function addEmployee() {
-  const sql = `INSERT INTO roles (role_id, first_name, last_name, manager_id)
+  const sql = `INSERT INTO employees (role_id, first_name, last_name, manager_id)
       VALUES (?)`;
   const params = [body.department_id, body.job_title, body.salary];
 
@@ -295,7 +290,7 @@ function insertEmployee(roleChoices) {
     .then(function (data) {
       console.log(data);
 
-      var sql = `INSERT INTO roles SET ?`;
+      var sql = `INSERT INTO employees SET ?`;
       // when finished prompting, insert a new item into the db with that info
       connection.query(
         sql,
@@ -316,3 +311,24 @@ function insertEmployee(roleChoices) {
     });
 }
 
+function updateRole() {
+  const sql = `SELECT employee.role_id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = roles.department LEFT JOIN manager ON employee.manager_id = managers ORDER BY roles.department;`;
+  const params = [body.department_id, body.job_title, body.salary];
+
+  connection.query(sql, params, (err, res) => {
+    if (err) {
+      throw err;
+    }
+
+    const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
+      value: id,
+      department_id: `${department_id}`,
+      job_title: `${job_title}`,
+      salary: `${salary}`,
+    }));
+
+    console.table(res);
+
+    insertEmployee(roleChoices);
+  });
+}
