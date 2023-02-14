@@ -189,7 +189,7 @@ function addRole() {
 
     const department = res.map(({ id, department_name }) => ({
       value: id,
-      department_name: `${department_name}`,
+      name: `${id} ${department_name}`,
     }));
 
     console.table(res);
@@ -253,7 +253,7 @@ function addEmployee() {
 
     const roleChoices = res.map(({ id, job_title }) => ({
       value: id,
-      job_title: `${job_title}`,
+      name: `${id} ${job_title}`,
     }));
 
     console.table(res);
