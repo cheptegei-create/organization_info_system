@@ -205,7 +205,7 @@ function insertNewRole(department) {
         type: "list",
         name: "department",
         message: "In which department does the role belong to?",
-        choices: department
+        choices: department,
       },
       {
         type: "input",
@@ -270,7 +270,7 @@ function insertEmployee(roleChoices) {
         type: "list",
         name: "role_id",
         message: "Allocate a role to the employee?",
-        choices: roleChoices
+        choices: roleChoices,
       },
       {
         type: "input",
@@ -308,7 +308,7 @@ function insertEmployee(roleChoices) {
 }
 
 function updateRole() {
-  let sql = `SELECT departments.department_name AS department, roles.job_title AS role, employee.id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name;`;
+  let sql = `SELECT departments.department_name AS department, roles.job_title AS role, employee.id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name`;
 
   db.query(sql, (err, res) => {
     if (err) {
@@ -335,7 +335,9 @@ function updateNewEmployee(employee) {
     }
 
     const newRoleChoices = res.map(({ id, job_title, salary }) => ({
-      value: id, job_title: `${job_title}`, salary: `${salary}`      
+      value: id,
+      job_title: `${job_title}`,
+      salary: `${salary}`,
     }));
 
     console.table(res);
@@ -351,34 +353,72 @@ function promptUpdate(employee, newRoleChoices) {
         type: "list",
         name: "id",
         message: "Which employee do you want to update their role?",
-        choices: employee
+        choices: employee,
       },
       {
         type: "list",
         name: "role_id",
         message: "Select the role:",
-        choices: newRoleChoices
+        choices: newRoleChoices,
       },
     ])
     .then(function (data) {
       console.log(data);
 
-      let sql = `UPDATE employee SET role_id = ? WHERE id = ?`
+      let sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
       // when finished prompting, insert a new item into the db with that info
-      db.query(
-        sql,
-        [
-          data.role_id,
-          data.id,
-        ],
-        function (err, res) {
-          if (err) {
-            console.log(err);
-          }
-          console.table(res);
-
-          clientInteraction();
+      db.query(sql, [data.role_id, data.id], function (err, res) {
+        if (err) {
+          console.log(err);
         }
-      );
+        console.table(res);
+
+        clientInteraction();
+      });
+    });
+}
+
+function removeEmployee() {
+  let sql = `SELECT departments.department_name AS department, roles.job_title AS role, employee.id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name;`;
+
+  db.query(sql, function (err, res) {
+    if (err) {
+      console.log(err);
+    }
+
+    const selectEmployee = res.map(({ id, first_name, last_name }) => ({
+      value: id,
+      name: `${id} ${first_name} ${last_name}`,
+    }));
+
+    console.table(res);
+
+    deleteEmployee(selectEmployee);
+  });
+}
+
+function deleteEmployee(selectEmployee) {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "exEmployee",
+        message: "Which employee do you want to fire today?",
+        choices: selectEmployee,
+      },
+    ])
+    .then(function (data) {
+      console.log(data);
+
+      const sql = `DELETE FROM employee WHERE ?`;
+      // when finished prompting, insert a new item into the db with that info
+      db.query(sql, { id: data.exEmployee }, function (err, res) {
+        if (err) {
+          console.log(err);
+        }
+        console.table(res);
+
+        clientInteraction();
+      });
     });
 }
