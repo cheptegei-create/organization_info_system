@@ -21,8 +21,9 @@ Clone the repo and then run npm install to install required dependencies.
 
 run npm init -y to create a new.json file, and then run npm install inquirer@8.2.4, followed by npm install mysql2, npm install console.table, and then npm install to install required dependencies. After, run the sql files in mysql workbench before running node server.js. Also ensure that your server.js is connected to your sql before running it. Select the prompts displayed on your console to display your data. Follow the demo video for easier usage. 
 
- 
-![alt text](assets/images/screenshot.png)
+ [video demo](vide_demo.webm)
+
+![alt text](/demo.gif)
   
 
 ## Credits
