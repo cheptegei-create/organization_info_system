@@ -1,7 +1,9 @@
+//importing packages
 const mysql = require("mysql2");
 const inquirer = require("inquirer");
 require("console.table");
 
+//Connecting the database
 const db = mysql.createConnection(
   {
     host: "localhost",
@@ -19,6 +21,7 @@ const db = mysql.createConnection(
   console.log(`Connected to the organization_db database.`)
 );
 
+//Function to execute the program and connects to the database
 db.connect(function (err) {
   if (err) {
     console.log(err);
@@ -97,7 +100,7 @@ const clientInteraction = function () {
 function viewDepartments() {
   //reading all departments
 
-  let sql = `SELECT id, department_name AS title FROM departments`;
+  let sql = `SELECT id, department_name FROM departments ORDER BY departments.id`;
 
   db.query(sql, (err, res) => {
     if (err) {
@@ -115,7 +118,7 @@ function viewRoles() {
 
   //reading all roles
 
-  let sql = `SELECT departments.department_name AS department, roles.job_title, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name;`;
+  let sql = `SELECT departments.department_name AS department, roles.job_title, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name`;
 
   db.query(sql, function (err, res) {
     if (err) {
@@ -144,7 +147,7 @@ function viewEmployees() {
     clientInteraction();
   });
 }
-
+//Function to add a department to the system
 function addDepartment() {
   inquirer
     .prompt([
@@ -175,14 +178,34 @@ function addDepartment() {
       );
     });
 }
-
+//Function to map the required information to add a role to the system
 function addRole() {
+  const sql = `SELECT id, department_name FROM departments ORDER BY departments.id`;
+
+  db.query(sql, (err, res) => {
+    if (err) {
+      console.log(err);
+    }
+
+    const department = res.map(({ id, department_name }) => ({
+      value: id,
+      department_name: `${department_name}`,
+    }));
+
+    console.table(res);
+
+    insertNewRole(department);
+  });
+}
+// Function to prompt the user for the new role information and adds to the system
+function insertNewRole(department) {
   inquirer
     .prompt([
       {
-        type: "input",
-        name: "department_id",
-        message: "In which department_id does it belong to?",
+        type: "list",
+        name: "department",
+        message: "In which department does the role belong to?",
+        choices: department
       },
       {
         type: "input",
@@ -285,23 +308,77 @@ function insertEmployee(roleChoices) {
 }
 
 function updateRole() {
-  let sql = `SELECT employee.role_id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = roles.department LEFT JOIN manager ON employee.manager_id = managers ORDER BY roles.department;`;
-  const params = [body.department_id, body.job_title, body.salary];
+  let sql = `SELECT departments.department_name AS department, roles.job_title AS role, employee.id, employee.first_name, employee.last_name, employee.manager_id FROM employee LEFT JOIN roles ON employee.role_id = roles.id LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name;`;
 
-  db.query(sql, params, (err, res) => {
+  db.query(sql, (err, res) => {
     if (err) {
       console.log(err);
     }
 
-    const roleChoices = res.map(({ id, department_id, job_title, salary }) => ({
+    const employee = res.map(({ id, first_name, last_name }) => ({
       value: id,
-      department_id: `${department_id}`,
-      job_title: `${job_title}`,
-      salary: `${salary}`,
+      name: `${first_name} ${last_name}`,
     }));
 
     console.table(res);
 
-    insertEmployee(roleChoices);
+    updateNewEmployee(employee);
   });
+}
+
+function updateNewEmployee(employee) {
+  let sql = `SELECT departments.department_name AS department, roles.id, roles.job_title, roles.salary FROM roles LEFT JOIN departments ON roles.department_id = departments.id ORDER BY departments.department_name`;
+
+  db.query(sql, function (err, res) {
+    if (err) {
+      console.log(err);
+    }
+
+    const newRoleChoices = res.map(({ id, job_title, salary }) => ({
+      value: id, job_title: `${job_title}`, salary: `${salary}`      
+    }));
+
+    console.table(res);
+
+    promptUpdate(employee, newRoleChoices);
+  });
+}
+
+function promptUpdate(employee, newRoleChoices) {
+  inquirer
+    .prompt([
+      {
+        type: "list",
+        name: "id",
+        message: "Which employee do you want to update their role?",
+        choices: employee
+      },
+      {
+        type: "list",
+        name: "role_id",
+        message: "Select the role:",
+        choices: newRoleChoices
+      },
+    ])
+    .then(function (data) {
+      console.log(data);
+
+      let sql = `UPDATE employee SET role_id = ? WHERE id = ?`
+      // when finished prompting, insert a new item into the db with that info
+      db.query(
+        sql,
+        [
+          data.role_id,
+          data.id,
+        ],
+        function (err, res) {
+          if (err) {
+            console.log(err);
+          }
+          console.table(res);
+
+          clientInteraction();
+        }
+      );
+    });
 }
