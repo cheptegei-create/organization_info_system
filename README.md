@@ -23,7 +23,7 @@ run npm init -y to create a new.json file, and then run npm install inquirer@8.2
 
  [video demo](https://drive.google.com/file/d/1z9eqErMmQwMhhvLQfzTxVrsQ0CqaeZJ0/view?usp=share_link)
 
-![alt text](/demo)
+![alt text](.demo)
   
 
 ## Credits
