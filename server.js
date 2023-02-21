@@ -227,7 +227,7 @@ function insertNewRole(department) {
         sql,
         {
           job_title: data.job_title,
-          id: data.department,
+          department_id: data.department,
           salary: data.salary,
         },
         function (err, res) {
